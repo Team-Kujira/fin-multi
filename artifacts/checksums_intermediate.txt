@@ -1,0 +1,1 @@
+0cd88ba6d23cbe42c11fa65d4021b6e9b1dd2b29a0fcdf3fbedfc701432fb070  ./target/wasm32-unknown-unknown/release/fin_multi.wasm
