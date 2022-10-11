@@ -29,7 +29,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                 Response::default().add_message(CosmosMsg::Bank(BankMsg::Send {
                     to_address: msg
                         .recipient
-                        .ok_or(StdError::generic_err("recipient not set"))?
+                        .ok_or_else(|| StdError::generic_err("recipient not set"))?
                         .to_string(),
                     amount: balances,
                 })),
