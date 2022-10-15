@@ -11,3 +11,7 @@ After all stages are complete, the total contract balance is returned to the sen
 Testnet: code_id 167
 
 `kujira1leuud33wer0hcxyskldutxc4agnum3uvdvdfl38tllhx4f6dtuhsqyatf8`
+
+Mainnet: code_id 26
+
+`kujira1a7pjjyvng22a8msatp4zj6ut9tmsd9qvp26gaj7tnrjrqtx7yafqk8zsqv`
