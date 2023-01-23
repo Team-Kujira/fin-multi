@@ -25,6 +25,23 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
         None => {
             // We're done, return balances to sender
             let balances = deps.querier.query_all_balances(env.contract.address)?;
+            if let Some(min_return) = msg.min_return {
+                for min in min_return {
+                    let err = Err(StdError::generic_err(format!(
+                        "insufficient return amount {}",
+                        min.denom
+                    )));
+                    match balances.iter().find(|x| x.denom == min.denom) {
+                        None => return err,
+                        Some(balance) => {
+                            if balance.amount < min.amount {
+                                return err;
+                            }
+                        }
+                    }
+                }
+            }
+
             Ok(
                 Response::default().add_message(CosmosMsg::Bank(BankMsg::Send {
                     to_address: msg
@@ -47,6 +64,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                         // If this is the first call, and the sender has explicity set a recipient, make sure that
                         // the sender is loaded for future calls
                         recipient: Some(msg.recipient.unwrap_or(info.sender)),
+                        min_return: msg.min_return,
                     })?,
                     funds: vec![],
                 })))
