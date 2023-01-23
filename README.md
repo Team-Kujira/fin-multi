@@ -8,9 +8,9 @@ After all stages are complete, the total contract balance is returned to the sen
 
 ## Deployments
 
-Testnet: code_id 167
+Testnet: code_id 1257
 
-`kujira1leuud33wer0hcxyskldutxc4agnum3uvdvdfl38tllhx4f6dtuhsqyatf8`
+`kujira1a493s7v9a4k46e4s9gg26wnqd0au63s9af2u6hgrnayfsyprn7fqg866wj`
 
 Mainnet: code_id 26
 
