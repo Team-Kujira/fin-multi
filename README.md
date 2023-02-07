@@ -12,6 +12,6 @@ Testnet: code_id 1257
 
 `kujira1a493s7v9a4k46e4s9gg26wnqd0au63s9af2u6hgrnayfsyprn7fqg866wj`
 
-Mainnet: code_id 26
+Mainnet: code_id 84
 
 `kujira1a7pjjyvng22a8msatp4zj6ut9tmsd9qvp26gaj7tnrjrqtx7yafqk8zsqv`
