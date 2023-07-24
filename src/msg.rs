@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Coin};
-use kujira::denom::Denom;
+use kujira::Denom;
 
 #[cw_serde]
 pub struct InstantiateMsg {}
