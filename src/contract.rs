@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coins, ensure, wasm_execute, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
-    Response, StdError, StdResult,
+    coins, ensure, wasm_execute, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env,
+    MessageInfo, Response, StdError, StdResult,
 };
 use kujira::Denom;
 
@@ -35,15 +35,19 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                 }
             }
 
-            Ok(
-                Response::default().add_message(CosmosMsg::Bank(BankMsg::Send {
+            let return_msg = match msg.callback {
+                Some(callback) => callback.to_message(&info.sender, Empty {}, balances)?,
+                None => BankMsg::Send {
                     to_address: msg
                         .recipient
                         .ok_or_else(|| StdError::generic_err("recipient not set"))?
                         .to_string(),
                     amount: balances,
-                })),
-            )
+                }
+                .into(),
+            };
+
+            Ok(Response::default().add_message(return_msg))
         }
         Some(s) => {
             let msgs = execute_swaps(deps, &env, s)?;
@@ -57,6 +61,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                         // the sender is loaded for future calls
                         recipient: Some(msg.recipient.unwrap_or(info.sender)),
                         min_return: msg.min_return,
+                        callback: None,
                     },
                     vec![],
                 )?))
