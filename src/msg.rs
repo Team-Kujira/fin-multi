@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Coin};
+use cw_storage_plus::Item;
 use kujira::{CallbackData, Denom};
 
 #[cw_serde]
@@ -19,3 +20,8 @@ pub struct ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {}
+
+#[cw_serde]
+pub struct MigrateMsg {}
+
+pub const CALLBACK_ADDRESS: Item<Addr> = Item::new("callback_address");

@@ -2,11 +2,11 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coins, ensure, wasm_execute, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env,
-    MessageInfo, Response, StdError, StdResult,
+    MessageInfo, QuerierWrapper, Response, StdError, StdResult,
 };
 use kujira::Denom;
 
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, CALLBACK_ADDRESS};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -20,11 +20,13 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> StdResult<Response> {
+    let storage = deps.storage;
+    let querier = deps.querier;
     let mut stages = msg.stages;
     match stages.pop() {
         None => {
             // We're done, return balances to sender
-            let balances = deps.querier.query_all_balances(env.contract.address)?;
+            let balances = querier.query_all_balances(env.contract.address)?;
             if let Some(min_return) = msg.min_return {
                 for min in min_return {
                     let denom = balances.iter().find(|x| x.denom == min.denom);
@@ -36,7 +38,15 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
             }
 
             let return_msg = match msg.callback {
-                Some(callback) => callback.to_message(&info.sender, Empty {}, balances)?,
+                Some(callback) => {
+                    let callback_address = if let Some(addr) = CALLBACK_ADDRESS.may_load(storage)? {
+                        CALLBACK_ADDRESS.remove(storage);
+                        addr
+                    } else {
+                        info.sender.clone()
+                    };
+                    callback.to_message(&callback_address, Empty {}, balances)?
+                }
                 None => BankMsg::Send {
                     to_address: msg
                         .recipient
@@ -50,7 +60,14 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
             Ok(Response::default().add_message(return_msg))
         }
         Some(s) => {
-            let msgs = execute_swaps(deps, &env, s)?;
+            let msgs = execute_swaps(querier, &env, s)?;
+            // store info.sender on first call if callback is set
+            if msg.callback.is_some() {
+                let callback_address = CALLBACK_ADDRESS.may_load(storage)?;
+                if callback_address.is_none() {
+                    CALLBACK_ADDRESS.save(storage, &info.sender)?;
+                }
+            }
             Ok(Response::default()
                 .add_messages(msgs)
                 .add_message(wasm_execute(
@@ -59,9 +76,9 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
                         stages,
                         // If this is the first call, and the sender has explicity set a recipient, make sure that
                         // the sender is loaded for future calls
-                        recipient: Some(msg.recipient.unwrap_or(info.sender)),
+                        recipient: Some(msg.recipient.unwrap_or(info.sender.clone())),
                         min_return: msg.min_return,
-                        callback: None,
+                        callback: msg.callback,
                     },
                     vec![],
                 )?))
@@ -69,8 +86,12 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
     }
 }
 
-fn execute_swaps(deps: DepsMut, env: &Env, addrs: Vec<(Addr, Denom)>) -> StdResult<Vec<CosmosMsg>> {
-    let balances = deps.querier.query_all_balances(&env.contract.address)?;
+fn execute_swaps(
+    querier: QuerierWrapper,
+    env: &Env,
+    addrs: Vec<(Addr, Denom)>,
+) -> StdResult<Vec<CosmosMsg>> {
+    let balances = querier.query_all_balances(&env.contract.address)?;
     let mut msgs: Vec<CosmosMsg> = vec![];
     for (addr, denom) in addrs {
         let balance = balances.iter().find(|b| b.denom == denom.to_string());
@@ -96,6 +117,11 @@ fn execute_swaps(deps: DepsMut, env: &Env, addrs: Vec<(Addr, Denom)>) -> StdResu
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
     unimplemented!()
+}
+
+#[entry_point]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+    Ok(Response::default())
 }
 
 #[cfg(test)]
