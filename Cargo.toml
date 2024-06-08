@@ -27,9 +27,6 @@ incremental = false
 overflow-checks = true
 
 [features]
-# for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
-# use library feature to disable all instantiate/execute/query exports
 library = []
 
 [package.metadata.scripts]
@@ -40,13 +37,13 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-schema = "1.5.3"
-cosmwasm-std = "1.5.3"
-cw-storage-plus = "1.2.0"
+cosmwasm-schema = "2.0"
+cosmwasm-std = { version = "2.0", default-features = false }
+cw-storage-plus = "2.0"
 schemars = "0.8.16"
-serde = { version = "1.0.197", default-features = false, features = ["derive"] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = "1"
-kujira = "0.8.3"
+kujira = "1.1"
 
 [dev-dependencies]
 cw-multi-test = "0.15.1"
