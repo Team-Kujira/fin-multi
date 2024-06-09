@@ -40,10 +40,10 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 cosmwasm-schema = "2.0"
 cosmwasm-std = { version = "2.0", default-features = false }
 cw-storage-plus = "2.0"
-schemars = "0.8.16"
+schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = "1"
 kujira = "1.1"
 
 [dev-dependencies]
-cw-multi-test = "0.15.1"
+cw-multi-test = { git = "https://github.com/cosmwasm/cw-multi-test", default-features = false }
